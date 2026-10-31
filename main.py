@@ -1,23 +1,20 @@
 
 import os
 import discord
-from discord import app_commands
 from discord.ext import commands
 
 # ==========================================
-# SECURE TOKEN
+# SECURE BOT TOKEN
 # ==========================================
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 if not TOKEN:
-    raise ValueError(
-        "DISCORD_TOKEN environment variable is missing!"
-    )
+    raise ValueError("DISCORD_TOKEN environment variable is missing!")
 
 
 # ==========================================
-# SERVER CONFIGURATION
+# SERVER ROLES
 # ==========================================
 
 ROLE_NAMES = [
@@ -27,47 +24,52 @@ ROLE_NAMES = [
     "Sentinal Management",
 ]
 
+
+# ==========================================
+# EXACT SERVER LAYOUT
+# ==========================================
+
 SERVER_LAYOUT = {
-    "INFORMATION DIVISION": [
-        "welcome",
-        "announcements",
-        "rules",
-        "server-info",
-        "roles",
+    "╭── INFORMATION DIVISION": [
+        "│・welcome",
+        "│・announcements",
+        "│・rules",
+        "│・server-info",
+        "╰・roles",
     ],
 
-    "PUBLIC ACCESS": [
-        "general-chat",
-        "suggestions",
+    "╭── PUBLIC ACCESS": [
+        "│・general-chat",
+        "╰・suggestions",
     ],
 
-    "REPORT CENTER": [
-        "submit-a-report",
-        "submit-evidence",
-        "scammer-reports",
-        "known-scammers",
-        "scam-server-reports",
+    "╭── REPORT CENTER": [
+        "│・submit-a-report",
+        "│・submit-evidence",
+        "│・scammer-reports",
+        "│・known-scammers",
+        "╰・scam-server-reports",
     ],
 
-    "INVESTIGATION DIVISION": [
-        "open-cases",
-        "under-review",
-        "resolved-cases",
-        "rejected-reports",
+    "╭── INVESTIGATION DIVISION": [
+        "│・open-cases",
+        "│・under-review",
+        "│・resolved-cases",
+        "╰・rejected-reports",
     ],
 
-    "INTERNAL AFFAIRS": [
-        "staff-chat",
-        "staff-announcements",
-        "staff-logs",
-        "staff-applications",
+    "╭── INTERNAL AFFAIRS": [
+        "│・staff-chat",
+        "│・staff-announcements",
+        "│・staff-logs",
+        "╰・staff-applications",
     ],
 
-    "EXECUTIVE OFFICE": [
-        "management",
-        "owner-room",
-        "security-logs",
-        "bot-logs",
+    "╭── EXECUTIVE OFFICE": [
+        "│・management",
+        "│・owner-room",
+        "│・security-logs",
+        "╰・bot-logs",
     ],
 }
 
@@ -82,6 +84,25 @@ bot = commands.Bot(
     command_prefix="!",
     intents=intents
 )
+
+
+# ==========================================
+# PERMISSION HELPER
+# ==========================================
+
+def make_permissions(
+    view=True,
+    send=False,
+    attach=False
+):
+    return discord.PermissionOverwrite(
+        view_channel=view,
+        send_messages=send,
+        read_message_history=True,
+        attach_files=attach,
+        embed_links=send,
+        add_reactions=send
+    )
 
 
 # ==========================================
@@ -115,33 +136,14 @@ async def create_roles(guild):
 
 
 # ==========================================
-# PERMISSION HELPER
-# ==========================================
-
-def permissions(
-    view=True,
-    send=False,
-    history=True,
-    attach=False
-):
-
-    return discord.PermissionOverwrite(
-        view_channel=view,
-        send_messages=send,
-        read_message_history=history,
-        attach_files=attach,
-        embed_links=send,
-        add_reactions=send
-    )
-
-
-# ==========================================
 # DELETE OLD CHANNELS AND CATEGORIES
 # ==========================================
 
 async def reset_channels(guild):
 
-    # Delete all non-category channels first
+    print("Deleting old channels...")
+
+    # Delete text, voice and other channels first
     for channel in list(guild.channels):
 
         if isinstance(channel, discord.CategoryChannel):
@@ -156,7 +158,9 @@ async def reset_channels(guild):
         except discord.NotFound:
             pass
 
-    # Delete categories afterwards
+    print("Deleting old categories...")
+
+    # Delete categories
     for category in list(guild.categories):
 
         try:
@@ -167,6 +171,130 @@ async def reset_channels(guild):
 
         except discord.NotFound:
             pass
+
+    print("Old server structure deleted.")
+
+
+# ==========================================
+# CREATE PERMISSIONS FOR CATEGORIES
+# ==========================================
+
+def get_category_permissions(guild, roles, category_name):
+
+    everyone = guild.default_role
+
+    staff = roles["Sentinal Staff"]
+    investigator = roles["Sentinal Investigator"]
+    senior = roles["Sentinal Senior Investigator"]
+    management = roles["Sentinal Management"]
+
+    # INFORMATION DIVISION
+    if category_name == "╭── INFORMATION DIVISION":
+
+        return {
+            everyone: make_permissions(
+                view=True,
+                send=False
+            )
+        }
+
+    # PUBLIC ACCESS
+    if category_name == "╭── PUBLIC ACCESS":
+
+        return {
+            everyone: make_permissions(
+                view=True,
+                send=True,
+                attach=True
+            )
+        }
+
+    # REPORT CENTER
+    if category_name == "╭── REPORT CENTER":
+
+        return {
+            everyone: make_permissions(
+                view=True,
+                send=False
+            ),
+
+            staff: make_permissions(
+                view=True,
+                send=True,
+                attach=True
+            ),
+
+            investigator: make_permissions(
+                view=True,
+                send=True,
+                attach=True
+            ),
+
+            senior: make_permissions(
+                view=True,
+                send=True,
+                attach=True
+            ),
+
+            management: make_permissions(
+                view=True,
+                send=True,
+                attach=True
+            )
+        }
+
+    # INVESTIGATION DIVISION
+    if category_name == "╭── INVESTIGATION DIVISION":
+
+        return {
+            everyone: make_permissions(view=False),
+
+            investigator: make_permissions(
+                view=True,
+                send=True
+            ),
+
+            senior: make_permissions(
+                view=True,
+                send=True
+            ),
+
+            management: make_permissions(
+                view=True,
+                send=True
+            )
+        }
+
+    # INTERNAL AFFAIRS
+    if category_name == "╭── INTERNAL AFFAIRS":
+
+        return {
+            everyone: make_permissions(view=False),
+
+            staff: make_permissions(
+                view=True,
+                send=True
+            ),
+
+            management: make_permissions(
+                view=True,
+                send=True
+            )
+        }
+
+    # EXECUTIVE OFFICE
+    if category_name == "╭── EXECUTIVE OFFICE":
+
+        return {
+            everyone: make_permissions(view=False),
+
+            management: make_permissions(
+                view=True,
+                send=True
+            )
+        }
+
+    return {}
 
 
 # ==========================================
@@ -182,161 +310,67 @@ async def create_server(guild, roles):
     senior = roles["Sentinal Senior Investigator"]
     management = roles["Sentinal Management"]
 
-    # INFORMATION DIVISION
-    info_overwrites = {
-        everyone: permissions(
-            view=True,
-            send=False
-        )
-    }
+    print("Creating categories and channels...")
 
-    # PUBLIC ACCESS
-    public_overwrites = {
-        everyone: permissions(
-            view=True,
-            send=True,
-            attach=True
-        )
-    }
-
-    # REPORT CENTER
-    report_overwrites = {
-        everyone: permissions(
-            view=True,
-            send=False
-        ),
-
-        staff: permissions(
-            view=True,
-            send=True,
-            attach=True
-        ),
-
-        investigator: permissions(
-            view=True,
-            send=True,
-            attach=True
-        ),
-
-        senior: permissions(
-            view=True,
-            send=True,
-            attach=True
-        ),
-
-        management: permissions(
-            view=True,
-            send=True,
-            attach=True
-        )
-    }
-
-    # INVESTIGATION DIVISION
-    investigation_overwrites = {
-        everyone: permissions(view=False),
-
-        investigator: permissions(
-            view=True,
-            send=True
-        ),
-
-        senior: permissions(
-            view=True,
-            send=True
-        ),
-
-        management: permissions(
-            view=True,
-            send=True
-        )
-    }
-
-    # INTERNAL AFFAIRS
-    internal_overwrites = {
-        everyone: permissions(view=False),
-
-        staff: permissions(
-            view=True,
-            send=True
-        ),
-
-        management: permissions(
-            view=True,
-            send=True
-        )
-    }
-
-    # EXECUTIVE OFFICE
-    executive_overwrites = {
-        everyone: permissions(view=False),
-
-        management: permissions(
-            view=True,
-            send=True
-        )
-    }
-
-    category_permissions = {
-        "INFORMATION DIVISION": info_overwrites,
-        "PUBLIC ACCESS": public_overwrites,
-        "REPORT CENTER": report_overwrites,
-        "INVESTIGATION DIVISION": investigation_overwrites,
-        "INTERNAL AFFAIRS": internal_overwrites,
-        "EXECUTIVE OFFICE": executive_overwrites
-    }
-
-    # CREATE CATEGORIES
     for category_name, channel_names in SERVER_LAYOUT.items():
 
+        print(f"Creating category: {category_name}")
+
+        category_overwrites = get_category_permissions(
+            guild,
+            roles,
+            category_name
+        )
+
+        # Create category
         category = await guild.create_category(
             name=category_name,
-            overwrites=category_permissions[category_name],
+            overwrites=category_overwrites,
             reason="SENTINAL NETWORK server setup"
         )
 
-        # CREATE CHANNELS
         for channel_name in channel_names:
 
-            # IMPORTANT FIX:
-            # Always pass a dictionary, never None.
-            # Copy category permissions to the new channel.
-            channel_overwrites = dict(category.overwrites)
+            # IMPORTANT:
+            # Always pass a dictionary to overwrites.
+            # Copy category permissions for the channel.
+            channel_overwrites = dict(category_overwrites)
 
-            # Public report submission channels
+            # PUBLIC REPORT SUBMISSION CHANNELS
             if (
-                category_name == "REPORT CENTER"
+                category_name == "╭── REPORT CENTER"
                 and channel_name in [
-                    "submit-a-report",
-                    "submit-evidence"
+                    "│・submit-a-report",
+                    "│・submit-evidence"
                 ]
             ):
 
                 channel_overwrites = {
-                    everyone: permissions(
+                    everyone: make_permissions(
                         view=True,
                         send=True,
                         attach=True
                     ),
 
-                    staff: permissions(
+                    staff: make_permissions(
                         view=True,
                         send=True,
                         attach=True
                     ),
 
-                    investigator: permissions(
+                    investigator: make_permissions(
                         view=True,
                         send=True,
                         attach=True
                     ),
 
-                    senior: permissions(
+                    senior: make_permissions(
                         view=True,
                         send=True,
                         attach=True
                     ),
 
-                    management: permissions(
+                    management: make_permissions(
                         view=True,
                         send=True,
                         attach=True
@@ -350,9 +384,13 @@ async def create_server(guild, roles):
                 reason="SENTINAL NETWORK server setup"
             )
 
+            print(f"Created channel: {channel_name}")
+
+    print("All categories and channels created!")
+
 
 # ==========================================
-# OWNER NOTIFICATION
+# NOTIFY OWNER
 # ==========================================
 
 async def notify_owner(user, message):
@@ -360,22 +398,18 @@ async def notify_owner(user, message):
     try:
 
         await user.send(message)
-        print("Owner notification sent.")
 
     except discord.Forbidden:
 
-        print(
-            "Could not DM the server owner. "
-            "Their direct messages may be disabled."
-        )
+        print("Could not DM owner. DMs may be disabled.")
 
     except discord.HTTPException as error:
 
-        print("Notification error:", repr(error))
+        print("Owner notification error:", repr(error))
 
 
 # ==========================================
-# CONFIRMATION VIEW
+# CONFIRMATION BUTTONS
 # ==========================================
 
 class SetupConfirmation(discord.ui.View):
@@ -387,7 +421,7 @@ class SetupConfirmation(discord.ui.View):
         self.guild = guild
         self.processing = False
 
-    # CONFIRM BUTTON
+    # CONFIRM RESET
     @discord.ui.button(
         label="CONFIRM SERVER RESET",
         style=discord.ButtonStyle.danger,
@@ -405,7 +439,6 @@ class SetupConfirmation(discord.ui.View):
                 "Only the server owner can confirm this reset.",
                 ephemeral=True
             )
-
             return
 
         if self.processing:
@@ -414,12 +447,11 @@ class SetupConfirmation(discord.ui.View):
                 "Setup is already running.",
                 ephemeral=True
             )
-
             return
 
         self.processing = True
 
-        # Acknowledge the button before deleting channels.
+        # Acknowledge interaction before deleting channels
         await interaction.response.defer(
             ephemeral=True,
             thinking=True
@@ -436,30 +468,27 @@ class SetupConfirmation(discord.ui.View):
 
             print("Roles ready.")
 
-            # Delete existing channels and categories
+            # Delete old channels and categories
             await reset_channels(self.guild)
 
-            print("Old channels deleted.")
-
-            # Recreate server layout
+            # Create the new server structure
             await create_server(self.guild, roles)
-
-            print("Server layout created.")
 
             success_message = (
                 "✅ **SENTINAL NETWORK SETUP COMPLETED!**\n\n"
-                "All 6 categories and 24 channels have been created.\n\n"
-                "**Roles created or found:**\n"
-                "• Sentinal Staff\n"
-                "• Sentinal Investigator\n"
-                "• Sentinal Senior Investigator\n"
-                "• Sentinal Management\n\n"
-                "Existing members and roles were kept."
+                "Your server now has:\n"
+                "• 6 categories\n"
+                "• 24 text channels\n"
+                "• 4 Sentinal roles\n\n"
+                "Your existing members and roles were kept."
             )
 
-            # Notify owner by DM because the command channel
-            # may have been deleted during the reset.
-            await notify_owner(owner, success_message)
+            print("SETUP COMPLETED SUCCESSFULLY.")
+
+            await notify_owner(
+                owner,
+                success_message
+            )
 
             try:
 
@@ -470,23 +499,23 @@ class SetupConfirmation(discord.ui.View):
 
             except discord.HTTPException:
 
-                print(
-                    "Interaction followup unavailable. "
-                    "Owner was notified by DM if possible."
-                )
+                print("Could not send interaction followup.")
 
         except Exception as error:
 
             print("SETUP ERROR:", repr(error))
 
             error_message = (
-                "❌ **SENTINAL NETWORK SETUP FAILED**\n\n"
+                "❌ **SETUP FAILED**\n\n"
                 "An error occurred while creating the server.\n"
-                "Check the bot console for the exact error.\n\n"
+                "Check the Bot-Hosting console for details.\n"
                 "Some channels may already have been deleted."
             )
 
-            await notify_owner(owner, error_message)
+            await notify_owner(
+                owner,
+                error_message
+            )
 
             try:
 
@@ -497,13 +526,13 @@ class SetupConfirmation(discord.ui.View):
 
             except discord.HTTPException:
 
-                print("Could not send interaction error message.")
+                print("Could not send error notification.")
 
         finally:
 
             self.stop()
 
-    # CANCEL BUTTON
+    # CANCEL RESET
     @discord.ui.button(
         label="CANCEL",
         style=discord.ButtonStyle.secondary,
@@ -521,7 +550,6 @@ class SetupConfirmation(discord.ui.View):
                 "Only the server owner can cancel setup.",
                 ephemeral=True
             )
-
             return
 
         await interaction.response.send_message(
@@ -538,39 +566,35 @@ class SetupConfirmation(discord.ui.View):
 
 @bot.tree.command(
     name="setupserver",
-    description="Reset and create the SENTINAL NETWORK server."
+    description="Create the SENTINAL NETWORK server layout."
 )
 async def setupserver(interaction: discord.Interaction):
 
     if interaction.guild is None:
 
         await interaction.response.send_message(
-            "This command can only be used inside a server.",
+            "This command can only be used in a server.",
             ephemeral=True
         )
-
         return
 
-    # OWNER CHECK
+    # Only actual server owner
     if interaction.user.id != interaction.guild.owner_id:
 
         await interaction.response.send_message(
             "❌ Only the server owner can use this command.",
             ephemeral=True
         )
-
         return
 
-    # BOT PERMISSION CHECK
     bot_member = interaction.guild.me
 
     if bot_member is None:
 
         await interaction.response.send_message(
-            "Could not find the bot's server member.",
+            "Could not find the bot in this server.",
             ephemeral=True
         )
-
         return
 
     if not bot_member.guild_permissions.manage_channels:
@@ -579,7 +603,6 @@ async def setupserver(interaction: discord.Interaction):
             "❌ I need the Manage Channels permission.",
             ephemeral=True
         )
-
         return
 
     if not bot_member.guild_permissions.manage_roles:
@@ -588,15 +611,14 @@ async def setupserver(interaction: discord.Interaction):
             "❌ I need the Manage Roles permission.",
             ephemeral=True
         )
-
         return
 
-    # CONFIRMATION EMBED
+    # Confirmation embed
     embed = discord.Embed(
         title="SENTINAL NETWORK | SERVER RESET",
 
         description=(
-            "You are about to reset the server structure.\n\n"
+            "You are about to rebuild the server layout.\n\n"
 
             "**THIS WILL DELETE:**\n"
             "• All existing channels\n"
@@ -608,7 +630,7 @@ async def setupserver(interaction: discord.Interaction):
             "• Existing roles\n"
             "• Server ownership\n\n"
 
-            "**ROLES CREATED IF MISSING:**\n"
+            "**NEW ROLES IF MISSING:**\n"
             "• Sentinal Staff\n"
             "• Sentinal Investigator\n"
             "• Sentinal Senior Investigator\n"
@@ -655,15 +677,13 @@ async def on_ready():
 
         except Exception as error:
 
-            print(
-                "COMMAND SYNC ERROR:",
-                repr(error)
-            )
+            print("COMMAND SYNC ERROR:", repr(error))
 
 
 # ==========================================
-# RUN BOT
+# START BOT
 # ==========================================
 
 bot.run(TOKEN)
+
 
