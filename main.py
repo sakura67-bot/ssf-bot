@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 
 # ==========================================
-# SECURE TOKEN CONFIGURATION
+# SECURE TOKEN
 # ==========================================
 
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -136,18 +136,19 @@ def permissions(
 
 
 # ==========================================
-# DELETE OLD CHANNELS
+# DELETE OLD CHANNELS AND CATEGORIES
 # ==========================================
 
 async def reset_channels(guild):
 
-    # Delete text, voice and other channels first
+    # Delete all non-category channels first
     for channel in list(guild.channels):
 
         if isinstance(channel, discord.CategoryChannel):
             continue
 
         try:
+
             await channel.delete(
                 reason="SENTINAL NETWORK server reset"
             )
@@ -155,10 +156,11 @@ async def reset_channels(guild):
         except discord.NotFound:
             pass
 
-    # Delete old categories
+    # Delete categories afterwards
     for category in list(guild.categories):
 
         try:
+
             await category.delete(
                 reason="SENTINAL NETWORK server reset"
             )
@@ -295,9 +297,12 @@ async def create_server(guild, roles):
         # CREATE CHANNELS
         for channel_name in channel_names:
 
-            channel_overwrites = None
+            # IMPORTANT FIX:
+            # Always pass a dictionary, never None.
+            # Copy category permissions to the new channel.
+            channel_overwrites = dict(category.overwrites)
 
-            # Submission channels allow public reports
+            # Public report submission channels
             if (
                 category_name == "REPORT CENTER"
                 and channel_name in [
@@ -347,6 +352,29 @@ async def create_server(guild, roles):
 
 
 # ==========================================
+# OWNER NOTIFICATION
+# ==========================================
+
+async def notify_owner(user, message):
+
+    try:
+
+        await user.send(message)
+        print("Owner notification sent.")
+
+    except discord.Forbidden:
+
+        print(
+            "Could not DM the server owner. "
+            "Their direct messages may be disabled."
+        )
+
+    except discord.HTTPException as error:
+
+        print("Notification error:", repr(error))
+
+
+# ==========================================
 # CONFIRMATION VIEW
 # ==========================================
 
@@ -391,49 +419,85 @@ class SetupConfirmation(discord.ui.View):
 
         self.processing = True
 
-        # Defer before deleting the channel containing
-        # the original confirmation message.
+        # Acknowledge the button before deleting channels.
         await interaction.response.defer(
             ephemeral=True,
             thinking=True
         )
 
+        owner = interaction.user
+
         try:
+
+            print("Starting SENTINAL NETWORK setup...")
 
             # Create or find roles
             roles = await create_roles(self.guild)
 
+            print("Roles ready.")
+
             # Delete existing channels and categories
             await reset_channels(self.guild)
+
+            print("Old channels deleted.")
 
             # Recreate server layout
             await create_server(self.guild, roles)
 
-            await interaction.followup.send(
+            print("Server layout created.")
+
+            success_message = (
                 "✅ **SENTINAL NETWORK SETUP COMPLETED!**\n\n"
                 "All 6 categories and 24 channels have been created.\n\n"
-                "Your existing members and roles were kept.",
-                ephemeral=True
+                "**Roles created or found:**\n"
+                "• Sentinal Staff\n"
+                "• Sentinal Investigator\n"
+                "• Sentinal Senior Investigator\n"
+                "• Sentinal Management\n\n"
+                "Existing members and roles were kept."
             )
 
-        except Exception as error:
-
-            print(
-                "SETUP ERROR:",
-                repr(error)
-            )
+            # Notify owner by DM because the command channel
+            # may have been deleted during the reset.
+            await notify_owner(owner, success_message)
 
             try:
+
                 await interaction.followup.send(
-                    "❌ **SETUP FAILED**\n\n"
-                    "An error occurred during setup. "
-                    "Check the console for details.\n"
-                    "Some channels may already have been deleted.",
+                    success_message,
                     ephemeral=True
                 )
 
             except discord.HTTPException:
-                print("Could not send setup error notification.")
+
+                print(
+                    "Interaction followup unavailable. "
+                    "Owner was notified by DM if possible."
+                )
+
+        except Exception as error:
+
+            print("SETUP ERROR:", repr(error))
+
+            error_message = (
+                "❌ **SENTINAL NETWORK SETUP FAILED**\n\n"
+                "An error occurred while creating the server.\n"
+                "Check the bot console for the exact error.\n\n"
+                "Some channels may already have been deleted."
+            )
+
+            await notify_owner(owner, error_message)
+
+            try:
+
+                await interaction.followup.send(
+                    error_message,
+                    ephemeral=True
+                )
+
+            except discord.HTTPException:
+
+                print("Could not send interaction error message.")
 
         finally:
 
@@ -481,7 +545,7 @@ async def setupserver(interaction: discord.Interaction):
     if interaction.guild is None:
 
         await interaction.response.send_message(
-            "This command can only be used in a server.",
+            "This command can only be used inside a server.",
             ephemeral=True
         )
 
@@ -544,7 +608,7 @@ async def setupserver(interaction: discord.Interaction):
             "• Existing roles\n"
             "• Server ownership\n\n"
 
-            "**NEW ROLES:**\n"
+            "**ROLES CREATED IF MISSING:**\n"
             "• Sentinal Staff\n"
             "• Sentinal Investigator\n"
             "• Sentinal Senior Investigator\n"
@@ -602,3 +666,4 @@ async def on_ready():
 # ==========================================
 
 bot.run(TOKEN)
+
