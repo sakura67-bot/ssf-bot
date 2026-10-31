@@ -38,7 +38,7 @@ ROLE_CONFIG = {
 # ==========================================
 
 SERVER_LAYOUT = {
-    "╭── INFORMATION DIVISION": [
+    "╭── INFORMATION": [
         "│・welcome",
         "│・announcements",
         "│・rules",
@@ -46,12 +46,12 @@ SERVER_LAYOUT = {
         "╰・roles",
     ],
 
-    "╭── PUBLIC ACCESS": [
+    "╭── PUBLIC": [
         "│・general-chat",
         "╰・suggestions",
     ],
 
-    "╭── REPORT CENTER": [
+    "╭── REPORT": [
         "│・submit-a-report",
         "│・submit-evidence",
         "│・scammer-reports",
@@ -59,21 +59,21 @@ SERVER_LAYOUT = {
         "╰・scam-server-reports",
     ],
 
-    "╭── INVESTIGATION DIVISION": [
+    "╭── INVESTIGATION": [
         "│・open-cases",
         "│・under-review",
         "│・resolved-cases",
         "╰・rejected-reports",
     ],
 
-    "╭── INTERNAL AFFAIRS": [
+    "╭── STAFF AREA": [
         "│・staff-chat",
         "│・staff-announcements",
         "│・staff-logs",
         "╰・staff-applications",
     ],
 
-    "╭── EXECUTIVE OFFICE": [
+    "╭── MANAGEMENT": [
         "│・management",
         "│・owner-room",
         "│・security-logs",
