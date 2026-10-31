@@ -1,3 +1,4 @@
+
 import os
 import discord
 from discord.ext import commands
@@ -13,32 +14,156 @@ if not TOKEN:
 
 
 # ==========================================
-# SENTINAL NETWORK ROLES
+# ROLE CONFIGURATION
+# Permissions are server-level permissions.
 # ==========================================
 
 ROLE_CONFIG = {
-    "Founder": "E5C76B",
-    "Sentinel Leadership": "D4AF37",
-    "Director": "B58BFF",
-    "Head Scam Investigator": "9370DB",
-    "Senior Scam Investigator": "8064C8",
-    "Scam Investigator": "6B70C8",
-    "Junior Scam Investigator": "5686B8",
-    "Trial Scam Investigator": "55A6B0",
-    "Staff": "9B9BBA",
-    "Staff of the Month": "F0C75E",
-    "Staff of the Week": "C49B50",
-    "Verified Member": "6595D8",
-    "Community Member": "A0A0A0",
+    # Leadership
+    "Founder": {
+        "color": "E5C76B",
+        "permissions": discord.Permissions(administrator=True),
+    },
+
+    "Sentinel Leadership": {
+        "color": "D4AF37",
+        "permissions": discord.Permissions(
+            manage_guild=True,
+            manage_channels=True,
+            manage_roles=True,
+            manage_messages=True,
+            moderate_members=True,
+            kick_members=True,
+            ban_members=True,
+            view_audit_log=True,
+            manage_nicknames=True,
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+        ),
+    },
+
+    "Director": {
+        "color": "B58BFF",
+        "permissions": discord.Permissions(
+            manage_channels=True,
+            manage_messages=True,
+            moderate_members=True,
+            kick_members=True,
+            view_audit_log=True,
+            manage_nicknames=True,
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+        ),
+    },
+
+    # Investigators
+    "Head Scam Investigator": {
+        "color": "9370DB",
+        "permissions": discord.Permissions(
+            manage_messages=True,
+            moderate_members=True,
+            view_audit_log=True,
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+        ),
+    },
+
+    "Senior Scam Investigator": {
+        "color": "8064C8",
+        "permissions": discord.Permissions(
+            manage_messages=True,
+            moderate_members=True,
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+        ),
+    },
+
+    "Scam Investigator": {
+        "color": "6B70C8",
+        "permissions": discord.Permissions(
+            manage_messages=True,
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+        ),
+    },
+
+    "Junior Scam Investigator": {
+        "color": "5686B8",
+        "permissions": discord.Permissions(
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+        ),
+    },
+
+    "Trial Scam Investigator": {
+        "color": "55A6B0",
+        "permissions": discord.Permissions(
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+        ),
+    },
+
+    # Staff
+    "Staff": {
+        "color": "9B9BBA",
+        "permissions": discord.Permissions(
+            manage_messages=True,
+            moderate_members=True,
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+        ),
+    },
+
+    # Recognition roles
+    "Staff of the Month": {
+        "color": "F0C75E",
+        "permissions": discord.Permissions.none(),
+    },
+
+    "Staff of the Week": {
+        "color": "C49B50",
+        "permissions": discord.Permissions.none(),
+    },
+
+    # Member roles
+    "Verified Member": {
+        "color": "6595D8",
+        "permissions": discord.Permissions(
+            read_message_history=True,
+            send_messages=True,
+            attach_files=True,
+            embed_links=True,
+            add_reactions=True,
+            view_channel=True,
+        ),
+    },
+
+    "Community Member": {
+        "color": "A0A0A0",
+        "permissions": discord.Permissions(
+            read_message_history=True,
+            send_messages=True,
+            view_channel=True,
+            add_reactions=True,
+        ),
+    },
 }
 
 
 # ==========================================
-# EXACT SERVER LAYOUT
+# SERVER LAYOUT
 # ==========================================
 
 SERVER_LAYOUT = {
-    "╭── INFORMATION": [
+    "╭── INFORMATION DIVISION": [
         "│・welcome",
         "│・announcements",
         "│・rules",
@@ -46,12 +171,12 @@ SERVER_LAYOUT = {
         "╰・roles",
     ],
 
-    "╭── PUBLIC": [
+    "╭── PUBLIC ACCESS": [
         "│・general-chat",
         "╰・suggestions",
     ],
 
-    "╭── REPORT": [
+    "╭── REPORT CENTER": [
         "│・submit-a-report",
         "│・submit-evidence",
         "│・scammer-reports",
@@ -59,21 +184,21 @@ SERVER_LAYOUT = {
         "╰・scam-server-reports",
     ],
 
-    "╭── INVESTIGATION": [
+    "╭── INVESTIGATION DIVISION": [
         "│・open-cases",
         "│・under-review",
         "│・resolved-cases",
         "╰・rejected-reports",
     ],
 
-    "╭── STAFF AREA": [
+    "╭── INTERNAL AFFAIRS": [
         "│・staff-chat",
         "│・staff-announcements",
         "│・staff-logs",
         "╰・staff-applications",
     ],
 
-    "╭── MANAGEMENT": [
+    "╭── EXECUTIVE OFFICE": [
         "│・management",
         "│・owner-room",
         "│・security-logs",
@@ -83,7 +208,7 @@ SERVER_LAYOUT = {
 
 
 # ==========================================
-# BOT SETUP
+# BOT
 # ==========================================
 
 intents = discord.Intents.default()
@@ -95,22 +220,55 @@ bot = commands.Bot(
 
 
 # ==========================================
-# PERMISSION HELPER
+# PERMISSION HELPERS
 # ==========================================
 
-def make_permissions(view=True, send=False, attach=False):
+def make_permissions(
+    view=True,
+    send=False,
+    attach=False,
+    manage_messages=False,
+    embed=False
+):
     return discord.PermissionOverwrite(
         view_channel=view,
         send_messages=send,
         read_message_history=True,
         attach_files=attach,
-        embed_links=send,
-        add_reactions=send
+        embed_links=embed,
+        add_reactions=send,
+        manage_messages=manage_messages
     )
 
 
+def get_roles(roles, names):
+    return [roles[name] for name in names]
+
+
+INVESTIGATOR_ROLES = [
+    "Trial Scam Investigator",
+    "Junior Scam Investigator",
+    "Scam Investigator",
+    "Senior Scam Investigator",
+    "Head Scam Investigator",
+]
+
+MANAGEMENT_ROLES = [
+    "Sentinel Leadership",
+    "Director",
+    "Founder",
+]
+
+STAFF_ROLES = [
+    "Staff",
+    "Sentinel Leadership",
+    "Director",
+    "Founder",
+]
+
+
 # ==========================================
-# DELETE OLD CHANNELS AND CATEGORIES
+# DELETE OLD CHANNELS
 # ==========================================
 
 async def reset_channels(guild):
@@ -124,39 +282,35 @@ async def reset_channels(guild):
 
         try:
             await channel.delete(
-                reason="SENTINAL NETWORK server reset"
+                reason="SENTINAL NETWORK reset"
             )
-            print(f"Deleted channel: {channel.name}")
+            print("Deleted channel:", channel.name)
 
         except discord.NotFound:
             pass
 
         except discord.Forbidden:
-            print(f"Could not delete channel: {channel.name}")
+            print("Cannot delete channel:", channel.name)
 
         except discord.HTTPException as error:
-            print(f"Channel deletion error: {error}")
-
-    print("Deleting old categories...")
+            print("Channel error:", repr(error))
 
     for category in list(guild.categories):
 
         try:
             await category.delete(
-                reason="SENTINAL NETWORK server reset"
+                reason="SENTINAL NETWORK reset"
             )
-            print(f"Deleted category: {category.name}")
+            print("Deleted category:", category.name)
 
         except discord.NotFound:
             pass
 
         except discord.Forbidden:
-            print(f"Could not delete category: {category.name}")
+            print("Cannot delete category:", category.name)
 
         except discord.HTTPException as error:
-            print(f"Category deletion error: {error}")
-
-    print("Channel reset completed.")
+            print("Category error:", repr(error))
 
 
 # ==========================================
@@ -168,27 +322,24 @@ async def delete_old_roles(guild):
     bot_member = guild.me
 
     if bot_member is None:
-        raise RuntimeError("Could not find the bot's server member.")
-
-    print("Deleting old roles...")
+        raise RuntimeError("Bot member not found.")
 
     deleted = 0
     skipped = 0
 
-    # Delete from lower roles upwards.
+    print("Deleting old roles...")
+
     for role in sorted(
         list(guild.roles),
         key=lambda r: r.position
     ):
 
-        # These roles cannot be deleted.
         if role.is_default() or role.managed:
             skipped += 1
             continue
 
-        # The bot cannot delete roles at or above its highest role.
         if role >= bot_member.top_role:
-            print(f"Skipped role above bot: {role.name}")
+            print("Skipped role above bot:", role.name)
             skipped += 1
             continue
 
@@ -196,20 +347,18 @@ async def delete_old_roles(guild):
             await role.delete(
                 reason="SENTINAL NETWORK role reset"
             )
-
-            print(f"Deleted role: {role.name}")
             deleted += 1
+            print("Deleted role:", role.name)
 
         except discord.Forbidden:
-            print(f"Permission denied deleting role: {role.name}")
             skipped += 1
+            print("Cannot delete role:", role.name)
 
         except discord.HTTPException as error:
-            print(f"Could not delete {role.name}: {error}")
             skipped += 1
+            print("Role error:", repr(error))
 
-    print(f"Roles deleted: {deleted}")
-    print(f"Roles skipped: {skipped}")
+    return deleted, skipped
 
 
 # ==========================================
@@ -220,26 +369,24 @@ async def create_roles(guild):
 
     roles = {}
 
-    print("Creating SENTINAL NETWORK roles...")
+    print("Creating roles...")
 
-    for role_name, hex_colour in ROLE_CONFIG.items():
-
-        colour = discord.Colour(int(hex_colour, 16))
+    for name, config in ROLE_CONFIG.items():
 
         role = await guild.create_role(
-            name=role_name,
-            colour=colour,
+            name=name,
+            colour=discord.Colour(
+                int(config["color"], 16)
+            ),
+            permissions=config["permissions"],
             hoist=True,
-            permissions=discord.Permissions.none(),
             mentionable=False,
-            reason="SENTINAL NETWORK role setup"
+            reason="SENTINAL NETWORK role creation"
         )
 
-        roles[role_name] = role
+        roles[name] = role
 
-        print(f"Created role: {role_name}")
-
-    print("All roles created!")
+        print("Created role:", name)
 
     return roles
 
@@ -251,31 +398,6 @@ async def create_roles(guild):
 def get_category_permissions(guild, roles, category_name):
 
     everyone = guild.default_role
-
-    staff = roles["Staff"]
-    investigator = roles["Scam Investigator"]
-    junior = roles["Junior Scam Investigator"]
-    trial = roles["Trial Scam Investigator"]
-    senior = roles["Senior Scam Investigator"]
-    head = roles["Head Scam Investigator"]
-
-    leadership = roles["Sentinel Leadership"]
-    director = roles["Director"]
-    founder = roles["Founder"]
-
-    management_roles = [
-        leadership,
-        director,
-        founder
-    ]
-
-    investigation_roles = [
-        investigator,
-        junior,
-        trial,
-        senior,
-        head
-    ]
 
     # INFORMATION DIVISION
     if category_name == "╭── INFORMATION DIVISION":
@@ -294,7 +416,8 @@ def get_category_permissions(guild, roles, category_name):
             everyone: make_permissions(
                 view=True,
                 send=True,
-                attach=True
+                attach=True,
+                embed=True
             )
         }
 
@@ -305,21 +428,18 @@ def get_category_permissions(guild, roles, category_name):
             everyone: make_permissions(
                 view=True,
                 send=False
-            ),
-
-            staff: make_permissions(
-                view=True,
-                send=True,
-                attach=True
             )
         }
 
-        for role in investigation_roles + management_roles:
-
-            overwrites[role] = make_permissions(
+        for name in (
+            ["Staff"] + INVESTIGATOR_ROLES + MANAGEMENT_ROLES
+        ):
+            overwrites[roles[name]] = make_permissions(
                 view=True,
                 send=True,
-                attach=True
+                attach=True,
+                manage_messages=True,
+                embed=True
             )
 
         return overwrites
@@ -328,16 +448,17 @@ def get_category_permissions(guild, roles, category_name):
     if category_name == "╭── INVESTIGATION DIVISION":
 
         overwrites = {
-            everyone: make_permissions(view=False),
-            staff: make_permissions(view=False)
+            everyone: make_permissions(view=False)
         }
 
-        for role in investigation_roles + management_roles:
+        for name in INVESTIGATOR_ROLES + MANAGEMENT_ROLES:
 
-            overwrites[role] = make_permissions(
+            overwrites[roles[name]] = make_permissions(
                 view=True,
                 send=True,
-                attach=True
+                attach=True,
+                manage_messages=True,
+                embed=True
             )
 
         return overwrites
@@ -349,12 +470,14 @@ def get_category_permissions(guild, roles, category_name):
             everyone: make_permissions(view=False)
         }
 
-        for role in [staff] + management_roles:
+        for name in STAFF_ROLES:
 
-            overwrites[role] = make_permissions(
+            overwrites[roles[name]] = make_permissions(
                 view=True,
                 send=True,
-                attach=True
+                attach=True,
+                manage_messages=True,
+                embed=True
             )
 
         return overwrites
@@ -366,12 +489,14 @@ def get_category_permissions(guild, roles, category_name):
             everyone: make_permissions(view=False)
         }
 
-        for role in management_roles:
+        for name in MANAGEMENT_ROLES:
 
-            overwrites[role] = make_permissions(
+            overwrites[roles[name]] = make_permissions(
                 view=True,
                 send=True,
-                attach=True
+                attach=True,
+                manage_messages=True,
+                embed=True
             )
 
         return overwrites
@@ -380,31 +505,18 @@ def get_category_permissions(guild, roles, category_name):
 
 
 # ==========================================
-# CREATE SERVER STRUCTURE
+# CREATE SERVER CHANNELS
 # ==========================================
 
 async def create_server(guild, roles):
 
     everyone = guild.default_role
 
-    staff = roles["Staff"]
-    investigator = roles["Scam Investigator"]
-    junior = roles["Junior Scam Investigator"]
-    trial = roles["Trial Scam Investigator"]
-    senior = roles["Senior Scam Investigator"]
-    head = roles["Head Scam Investigator"]
-
-    leadership = roles["Sentinel Leadership"]
-    director = roles["Director"]
-    founder = roles["Founder"]
-
-    print("Creating categories and channels...")
+    print("Creating server layout...")
 
     for category_name, channel_names in SERVER_LAYOUT.items():
 
-        print(f"Creating category: {category_name}")
-
-        category_overwrites = get_category_permissions(
+        overwrites = get_category_permissions(
             guild,
             roles,
             category_name
@@ -412,15 +524,15 @@ async def create_server(guild, roles):
 
         category = await guild.create_category(
             name=category_name,
-            overwrites=category_overwrites,
-            reason="SENTINAL NETWORK server setup"
+            overwrites=overwrites,
+            reason="SENTINAL NETWORK setup"
         )
 
         for channel_name in channel_names:
 
-            channel_overwrites = dict(category_overwrites)
+            channel_overwrites = dict(overwrites)
 
-            # PUBLIC REPORT SUBMISSION CHANNELS
+            # Submission channels allow everyone to submit.
             if (
                 category_name == "╭── REPORT CENTER"
                 and channel_name in [
@@ -429,48 +541,27 @@ async def create_server(guild, roles):
                 ]
             ):
 
-                channel_overwrites = {
-                    everyone: make_permissions(
-                        view=True,
-                        send=True,
-                        attach=True
-                    )
-                }
-
-                staff_and_investigators = [
-                    staff,
-                    investigator,
-                    junior,
-                    trial,
-                    senior,
-                    head,
-                    leadership,
-                    director,
-                    founder
-                ]
-
-                for role in staff_and_investigators:
-
-                    channel_overwrites[role] = make_permissions(
-                        view=True,
-                        send=True,
-                        attach=True
-                    )
+                channel_overwrites[everyone] = make_permissions(
+                    view=True,
+                    send=True,
+                    attach=True,
+                    embed=True
+                )
 
             await guild.create_text_channel(
                 name=channel_name,
                 category=category,
                 overwrites=channel_overwrites,
-                reason="SENTINAL NETWORK server setup"
+                reason="SENTINAL NETWORK setup"
             )
 
-            print(f"Created channel: {channel_name}")
+            print("Created channel:", channel_name)
 
     print("All categories and channels created!")
 
 
 # ==========================================
-# NOTIFY OWNER
+# OWNER NOTIFICATION
 # ==========================================
 
 async def notify_owner(user, message):
@@ -479,14 +570,14 @@ async def notify_owner(user, message):
         await user.send(message)
 
     except discord.Forbidden:
-        print("Could not DM owner. DMs may be disabled.")
+        print("Owner DMs are disabled.")
 
     except discord.HTTPException as error:
-        print("Owner notification error:", repr(error))
+        print("DM error:", repr(error))
 
 
 # ==========================================
-# CONFIRMATION BUTTONS
+# CONFIRMATION VIEW
 # ==========================================
 
 class SetupConfirmation(discord.ui.View):
@@ -498,7 +589,6 @@ class SetupConfirmation(discord.ui.View):
         self.guild = guild
         self.processing = False
 
-    # CONFIRM RESET
     @discord.ui.button(
         label="CONFIRM SERVER RESET",
         style=discord.ButtonStyle.danger,
@@ -513,7 +603,7 @@ class SetupConfirmation(discord.ui.View):
         if interaction.user.id != self.guild.owner_id:
 
             await interaction.response.send_message(
-                "Only the server owner can confirm this reset.",
+                "Only the server owner can confirm.",
                 ephemeral=True
             )
             return
@@ -539,63 +629,67 @@ class SetupConfirmation(discord.ui.View):
 
             print("Starting SENTINAL NETWORK setup...")
 
-            # 1. Delete old channels and categories.
+            # 1. Delete channels.
             await reset_channels(self.guild)
 
-            # 2. Delete old deletable roles.
-            await delete_old_roles(self.guild)
+            # 2. Delete old roles.
+            deleted, skipped = await delete_old_roles(self.guild)
 
-            # 3. Create the new roles.
+            # 3. Create new roles.
             roles = await create_roles(self.guild)
 
-            # 4. Create the new server structure.
+            # 4. Create categories and channels.
             await create_server(self.guild, roles)
 
-            success_message = (
+            message = (
                 "✅ **SENTINAL NETWORK SETUP COMPLETED!**\n\n"
-                "Your server now has:\n"
-                "• 6 categories\n"
-                "• 24 text channels\n"
-                "• 13 new roles with individual colours\n\n"
-                "**The server icon was not changed.**\n\n"
-                "Please assign the new roles to your members manually."
+                "• 6 categories created\n"
+                "• 24 channels created\n"
+                "• 13 roles created\n"
+                f"• {deleted} old roles deleted\n"
+                f"• {skipped} old roles skipped\n\n"
+                "**Remember:** Assign the new roles to your members."
             )
 
             print("SETUP COMPLETED SUCCESSFULLY.")
 
-            await notify_owner(owner, success_message)
-
-            await interaction.followup.send(
-                success_message,
-                ephemeral=True
-            )
-
-        except Exception as error:
-
-            print("SETUP ERROR:", repr(error))
-
-            error_message = (
-                "❌ **SETUP FAILED**\n\n"
-                "An error occurred while rebuilding the server.\n"
-                "Check the Bot-Hosting console for details.\n\n"
-                "Some channels or roles may already have been deleted."
-            )
-
-            await notify_owner(owner, error_message)
+            await notify_owner(owner, message)
 
             try:
                 await interaction.followup.send(
-                    error_message,
+                    message,
                     ephemeral=True
                 )
 
+            except discord.NotFound:
+                print("Interaction expired; setup was successful.")
+
+            except discord.HTTPException as error:
+                print("Success message error:", repr(error))
+
+        except Exception as error:
+
+            print("SETUP FAILED:", repr(error))
+
+            message = (
+                "❌ **SETUP FAILED**\n\n"
+                "Check the Bot-Hosting console.\n"
+                "Some channels or roles may already have been deleted."
+            )
+
+            await notify_owner(owner, message)
+
+            try:
+                await interaction.followup.send(
+                    message,
+                    ephemeral=True
+                )
             except discord.HTTPException:
-                print("Could not send error notification.")
+                print("Could not send error followup.")
 
         finally:
             self.stop()
 
-    # CANCEL RESET
     @discord.ui.button(
         label="CANCEL",
         style=discord.ButtonStyle.secondary,
@@ -610,13 +704,13 @@ class SetupConfirmation(discord.ui.View):
         if interaction.user.id != self.guild.owner_id:
 
             await interaction.response.send_message(
-                "Only the server owner can cancel setup.",
+                "Only the server owner can cancel.",
                 ephemeral=True
             )
             return
 
         await interaction.response.send_message(
-            "Setup cancelled. Nothing was changed.",
+            "Setup cancelled.",
             ephemeral=True
         )
 
@@ -624,28 +718,27 @@ class SetupConfirmation(discord.ui.View):
 
 
 # ==========================================
-# SERVER SETUP COMMAND
+# /serversetup COMMAND
 # ==========================================
 
 @bot.tree.command(
     name="serversetup",
-    description="Completely rebuild the SENTINAL NETWORK server."
+    description="Completely rebuild SENTINAL NETWORK."
 )
 async def serversetup(interaction: discord.Interaction):
 
     if interaction.guild is None:
 
         await interaction.response.send_message(
-            "This command can only be used in a server.",
+            "Use this command inside a server.",
             ephemeral=True
         )
         return
 
-    # Only the actual server owner.
     if interaction.user.id != interaction.guild.owner_id:
 
         await interaction.response.send_message(
-            "❌ Only the server owner can use this command.",
+            "Only the server owner can use this command.",
             ephemeral=True
         )
         return
@@ -655,65 +748,45 @@ async def serversetup(interaction: discord.Interaction):
     if bot_member is None:
 
         await interaction.response.send_message(
-            "Could not find the bot in this server.",
+            "Could not find the bot.",
             ephemeral=True
         )
         return
 
-    if not bot_member.guild_permissions.manage_channels:
+    permissions = bot_member.guild_permissions
+
+    if not permissions.manage_channels or not permissions.manage_roles:
 
         await interaction.response.send_message(
-            "❌ I need the Manage Channels permission.",
-            ephemeral=True
-        )
-        return
-
-    if not bot_member.guild_permissions.manage_roles:
-
-        await interaction.response.send_message(
-            "❌ I need the Manage Roles permission.",
+            "The bot needs Manage Channels and Manage Roles.",
             ephemeral=True
         )
         return
 
     embed = discord.Embed(
-        title="SENTINAL NETWORK | COMPLETE SERVER RESET",
+        title="SENTINAL NETWORK | SERVER RESET",
         description=(
-            "⚠️ **WARNING: THIS ACTION IS DESTRUCTIVE.**\n\n"
-
-            "**THIS WILL DELETE:**\n"
-            "• All existing channels\n"
-            "• All existing categories\n"
-            "• Messages inside deleted channels\n"
-            "• All deletable existing roles\n\n"
-
-            "**THIS WILL KEEP:**\n"
-            "• Server ownership\n"
+            "⚠️ **THIS ACTION CANNOT BE UNDONE.**\n\n"
+            "**WILL DELETE:**\n"
+            "• All channels and categories\n"
+            "• Messages in deleted channels\n"
+            "• Deletable existing roles\n"
+            "• Existing role assignments\n\n"
+            "**WILL KEEP:**\n"
             "• Existing members\n"
-            "• The @everyone role\n"
-            "• Discord-managed roles and integrations\n"
-            "• Roles the bot cannot delete due to role hierarchy\n"
-            "• Your server icon\n\n"
-
-            "**NEW ROLES:**\n"
-            "• Founder\n"
-            "• Sentinel Leadership\n"
-            "• Director\n"
-            "• Head Scam Investigator\n"
-            "• Senior Scam Investigator\n"
-            "• Scam Investigator\n"
-            "• Junior Scam Investigator\n"
-            "• Trial Scam Investigator\n"
-            "• Staff\n"
-            "• Staff of the Month\n"
-            "• Staff of the Week\n"
-            "• Verified Member\n"
-            "• Community Member\n\n"
-
-            "Old role assignments will be lost. You will need to "
-            "assign the new roles to members manually.\n\n"
-
-            "**Only press confirm if you are certain.**"
+            "• Server ownership\n"
+            "• @everyone\n"
+            "• Discord-managed roles\n"
+            "• Roles above the bot's highest role\n"
+            "• Server icon\n\n"
+            "**WILL CREATE:**\n"
+            "• 6 categories\n"
+            "• 24 channels\n"
+            "• 13 coloured roles\n"
+            "• New role and channel permissions\n\n"
+            "Founder receives Administrator permission.\n"
+            "Assign new roles to members manually.\n\n"
+            "**Only confirm if you understand the consequences.**"
         ),
         colour=discord.Colour.from_rgb(112, 65, 190)
     )
@@ -730,7 +803,7 @@ async def serversetup(interaction: discord.Interaction):
 
 
 # ==========================================
-# BOT STARTUP
+# STARTUP
 # ==========================================
 
 @bot.event
@@ -751,11 +824,12 @@ async def on_ready():
 
         except Exception as error:
 
-            print("COMMAND SYNC ERROR:", repr(error))
+            print("Sync error:", repr(error))
 
 
 # ==========================================
-# START BOT
+# RUN BOT
 # ==========================================
 
 bot.run(TOKEN)
+
